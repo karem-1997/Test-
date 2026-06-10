@@ -2,54 +2,88 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل مع المطور</title>
+    <title>أداة معالجة ملفات الإكسيل</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 90%;
-        }
-        h1 { color: #333; }
-        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        .btn:hover { background-color: #0056b3; }
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #218838; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>أهلاً بك!</h1>
-        <p>إذا كنت بحاجة إلى مساعدة أو ترغب في تصميم ويب سايت خاص بك، يرجى التواصل مع المطور.</p>
-        <a href="https://wa.me/رقمك_هنا" class="btn">تواصل عبر واتساب</a>
+<div class="container">
+    <h2>أداة ربط ملفات الإكسيل</h2>
+    
+    <div class="input-group">
+        <label>الملف الأساسي (قاعدة البيانات):</label>
+        <input type="file" id="mainFile" accept=".xlsx, .xls">
+    </div>
+    
+    <div class="input-group">
+        <label>الملف الثاني (البحث):</label>
+        <input type="file" id="searchFile" accept=".xlsx, .xls">
     </div>
 
-    <script>
-        // رسالة ترحيب عند فتح الصفحة
-        window.onload = function() {
-            alert("أهلاً بك! إذا كنت بحاجة إلى مساعدة أو ترغب في تصميم ويب سايت خاص بك، يرجى التواصل مع المطور.");
-        };
-    </script>
+    <hr>
+    
+    <div class="input-group">
+        <label>اسم عمود Item Number في الملف الأساسي:</label>
+        <input type="text" id="mainItemCol" placeholder="مثلاً: Item Number">
+    </div>
+    <div class="input-group">
+        <label>أسماء أعمدة البيانات المطلوب جلبها (بفاصلة):</label>
+        <input type="text" id="dataCols" placeholder="مثلاً: Description,Location,Quantity">
+    </div>
+    <div class="input-group">
+        <label>اسم عمود Item Number في الملف الثاني:</label>
+        <input type="text" id="searchItemCol" placeholder="مثلاً: Item Number">
+    </div>
+
+    <button onclick="processData()">بدء المعالجة والتحميل</button>
+</div>
+
+<script>
+    async function processData() {
+        const mainFile = document.getElementById('mainFile').files[0];
+        const searchFile = document.getElementById('searchFile').files[0];
+
+        if (!mainFile || !searchFile) return alert("يرجى رفع الملفين!");
+
+        const readExcel = (file) => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(XLSX.read(e.target.result, {type: 'binary'}));
+            reader.readAsBinaryString(file);
+        });
+
+        const wbMain = await readExcel(mainFile);
+        const wbSearch = await readExcel(searchFile);
+
+        const dataMain = XLSX.utils.sheet_to_json(wbMain.Sheets[wbMain.SheetNames[0]]);
+        const dataSearch = XLSX.utils.sheet_to_json(wbSearch.Sheets[wbSearch.SheetNames[0]]);
+
+        const mainKey = document.getElementById('mainItemCol').value;
+        const searchKey = document.getElementById('searchItemCol').value;
+        const dataCols = document.getElementById('dataCols').value.split(',').map(s => s.trim());
+
+        const result = dataSearch.map(row => {
+            const found = dataMain.find(m => m[mainKey] == row[searchKey]);
+            let newRow = { [searchKey]: row[searchKey] };
+            dataCols.forEach(col => {
+                newRow[col] = found ? (found[col] || 'N/A') : 'N/A';
+            });
+            return newRow;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(result);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Result");
+        XLSX.writeFile(wb, "Result_File.xlsx");
+    }
+</script>
 </body>
 </html>
