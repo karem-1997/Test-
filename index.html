@@ -2,20 +2,20 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>أداة دمج البيانات المتكررة</title>
+    <title>أداة دمج البيانات الاحترافية</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
         .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .input-group { margin-bottom: 15px; }
         input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #d9534f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>دمج البيانات (مع دعم التكرارات)</h2>
+    <h2>دمج وتجميع بيانات الإكسيل</h2>
     <div class="input-group">
         <label>ملف قاعدة البيانات (الأساسي):</label>
         <input type="file" id="mainFile">
@@ -33,15 +33,15 @@
         <label>اسم عمود Item Number في ملف البحث:</label>
         <input type="text" id="searchColName" placeholder="مثلاً: Item Number">
     </div>
-    <button onclick="processData()">دمج وتجميع البيانات</button>
+    <button onclick="processData()">معالجة وتجميع البيانات</button>
 </div>
 
 <script>
     async function processData() {
         const file1 = document.getElementById('mainFile').files[0];
         const file2 = document.getElementById('searchFile').files[0];
-        const col1 = document.getElementById('mainColName').value;
-        const col2 = document.getElementById('searchColName').value;
+        const col1 = document.getElementById('mainColName').value.trim();
+        const col2 = document.getElementById('searchColName').value.trim();
 
         if (!file1 || !file2 || !col1 || !col2) return alert("يرجى ملء جميع الحقول!");
 
@@ -57,28 +57,28 @@
         const data2 = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]]);
 
         const result = data2.map(row => {
-            // البحث عن كل التطابقات
             const matches = data1.filter(m => String(m[col1]).trim() === String(row[col2]).trim());
             
             if (matches.length > 0) {
-                // تجميع المواقع والكميات في نص واحد داخل الخلية
-                let locations = matches.map(m => m['Location'] || 'N/A').join(' | ');
-                let quantities = matches.map(m => m['Quantity'] || '0').join(' | ');
+                // نأخذ نسخة من أول تطابق (ليحتوي على الديسكريبشن وباقي البيانات)
+                let mergedRow = { ...row, ...matches[0] };
                 
-                return { 
-                    ...row, 
-                    'Location_Combined': locations, 
-                    'Quantity_Combined': quantities 
-                };
+                // نجمع اللوكيشنات والكميات إذا كانت موجودة
+                if (matches.length > 1) {
+                    mergedRow['Location'] = matches.map(m => m['Location']).join(' | ');
+                    mergedRow['Quantity'] = matches.map(m => m['Quantity']).join(' | ');
+                }
+                return mergedRow;
             } else {
-                return { ...row, 'Location_Combined': 'N/A', 'Quantity_Combined': 'N/A' };
+                // إذا لم يوجد تطابق نضع N/A
+                return { ...row, 'Description': 'N/A', 'Location': 'N/A', 'Quantity': 'N/A' };
             }
         });
 
         const ws = XLSX.utils.json_to_sheet(result);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Result");
-        XLSX.writeFile(wb, "Final_Result_With_Details.xlsx");
+        XLSX.writeFile(wb, "Final_Result.xlsx");
         alert("تمت العملية بنجاح!");
     }
 </script>
