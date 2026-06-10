@@ -2,84 +2,629 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>أداة دمج البيانات الاحترافية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة دمج بيانات Excel</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 15px; }
-        input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a2e;
+        }
+
+        .page-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 20px 20px;
+        }
+
+        .header .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 0.95em;
+            font-weight: 400;
+        }
+
+        /* Card */
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 22px;
+        }
+
+        .card-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .icon-green { background: #e8f5e9; }
+        .icon-purple { background: #f3e5f5; }
+        .icon-blue { background: #e3f2fd; }
+        .icon-orange { background: #fff3e0; }
+
+        /* File Upload */
+        .file-upload {
+            position: relative;
+            border: 2px dashed #c5cae9;
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+            overflow: hidden;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .file-upload.has-file {
+            border-color: #4caf50;
+            background: #f1f8e9;
+            border-style: solid;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload .upload-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .file-upload:hover .upload-icon {
+            transform: scale(1.1);
+        }
+
+        .file-upload .file-label {
+            font-weight: 600;
+            color: #444;
+            font-size: 1em;
+            margin-bottom: 4px;
+        }
+
+        .file-upload .file-hint {
+            color: #999;
+            font-size: 0.82em;
+        }
+
+        .file-upload .file-name {
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 0.95em;
+            word-break: break-all;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: #bbb;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        /* Input Group */
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9em;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid #e8eaf6;
+            border-radius: 12px;
+            background: #fafbfc;
+            color: #1a1a2e;
+            font-size: 0.95em;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.25s ease;
+        }
+
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group input[type="text"]::placeholder {
+            color: #bbb;
+        }
+
+        .input-hint {
+            font-size: 0.78em;
+            color: #999;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Button */
+        .btn-primary {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05em;
+            font-weight: 700;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.45);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Progress */
+        .progress-area {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #f5f7ff;
+            border-radius: 12px;
+            border: 1px solid #e8eaf6;
+        }
+
+        .progress-area.show {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #e8eaf6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        /* Result */
+        .result-area {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 14px;
+            border: 1px solid #c8e6c9;
+            text-align: center;
+        }
+
+        .result-area.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .result-title {
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+
+        .result-desc {
+            color: #66bb6a;
+            font-size: 0.9em;
+        }
+
+        /* Error */
+        .error-area {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: #ffebee;
+            border-radius: 12px;
+            border: 1px solid #ffcdd2;
+            color: #c62828;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .error-area.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #bbb;
+            font-size: 0.8em;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .card { padding: 20px; border-radius: 16px; }
+            .header h1 { font-size: 1.5em; }
+            .header .logo-icon { width: 60px; height: 60px; font-size: 26px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>دمج وتجميع بيانات الإكسيل</h2>
-    <div class="input-group">
-        <label>ملف قاعدة البيانات (الأساسي):</label>
-        <input type="file" id="mainFile">
+<div class="page-wrapper">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-icon">📊</div>
+        <h1>دمج بيانات Excel</h1>
+        <p>أداة ذكية لربط البيانات بين ملفين Excel</p>
     </div>
-    <div class="input-group">
-        <label>اسم عمود Item Number في الملف الأساسي:</label>
-        <input type="text" id="mainColName" placeholder="مثلاً: Item Number">
+
+    <!-- Card 1: Main File -->
+    <div class="card">
+        <div class="card-title">
+            <span class="icon icon-green">📂</span>
+            الملف الأساسي (قاعدة البيانات)
+        </div>
+
+        <div class="file-upload" id="mainFileBox">
+            <input type="file" id="mainFile" accept=".xlsx,.xls,.csv">
+            <div class="upload-icon" id="mainFileIcon">📁</div>
+            <div class="file-label" id="mainFileLabel">اضغط لاختيار الملف</div>
+            <div class="file-hint" id="mainFileHint">Excel (.xlsx, .xls) أو CSV</div>
+        </div>
+
+        <div class="input-group" style="margin-top: 18px;">
+            <label for="mainColName">اسم عمود Item Number</label>
+            <input type="text" id="mainColName" placeholder="مثال: Item Number, رقم الصنف">
+            <div class="input-hint">💡 اكتب الاسم بالضبط كما في الإكسيل</div>
+        </div>
     </div>
-    <hr>
-    <div class="input-group">
-        <label>ملف البحث:</label>
-        <input type="file" id="searchFile">
+
+    <!-- Card 2: Search File -->
+    <div class="card">
+        <div class="card-title">
+            <span class="icon icon-purple">🔍</span>
+            ملف البحث (الذي تريد تكميله)
+        </div>
+
+        <div class="file-upload" id="searchFileBox">
+            <input type="file" id="searchFile" accept=".xlsx,.xls,.csv">
+            <div class="upload-icon" id="searchFileIcon">📋</div>
+            <div class="file-label" id="searchFileLabel">اضغط لاختيار الملف</div>
+            <div class="file-hint" id="searchFileHint">Excel (.xlsx, .xls) أو CSV</div>
+        </div>
+
+        <div class="input-group" style="margin-top: 18px;">
+            <label for="searchColName">اسم عمود Item Number</label>
+            <input type="text" id="searchColName" placeholder="مثال: Item Number, رقم الصنف">
+            <div class="input-hint">💡 اكتب الاسم بالضبط كما في الإكسيل</div>
+        </div>
     </div>
-    <div class="input-group">
-        <label>اسم عمود Item Number في ملف البحث:</label>
-        <input type="text" id="searchColName" placeholder="مثلاً: Item Number">
+
+    <!-- Card 3: Action -->
+    <div class="card" style="text-align: center;">
+        <button class="btn-primary" id="processBtn" onclick="processData()">
+            <span id="btnIcon">🚀</span>
+            <span id="btnText">دمج وتحميل الملف</span>
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-area" id="progressArea">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">جاري قراءة الملفات...</div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-area" id="errorArea"></div>
+
+        <!-- Result -->
+        <div class="result-area" id="resultArea">
+            <div class="result-icon">✅</div>
+            <div class="result-title">تمت العملية بنجاح!</div>
+            <div class="result-desc">تم تحميل الملف النهائي تلقائياً</div>
+        </div>
     </div>
-    <button onclick="processData()">معالجة وتجميع البيانات</button>
+
+    <div class="footer">
+        🔒 جميع البيانات تُعالج محلياً في متصفحك
+    </div>
 </div>
 
 <script>
+    // File upload handlers
+    document.getElementById('mainFile').addEventListener('change', function(e) {
+        handleFileSelect(e.target.files[0], 'main');
+    });
+
+    document.getElementById('searchFile').addEventListener('change', function(e) {
+        handleFileSelect(e.target.files[0], 'search');
+    });
+
+    function handleFileSelect(file, type) {
+        if (!file) return;
+
+        const box = document.getElementById(type + 'FileBox');
+        const label = document.getElementById(type + 'FileLabel');
+        const hint = document.getElementById(type + 'FileHint');
+        const icon = document.getElementById(type + 'FileIcon');
+
+        box.classList.add('has-file');
+        icon.textContent = '✅';
+        label.textContent = file.name;
+        label.style.color = '#2e7d32';
+        hint.textContent = 'تم اختيار الملف بنجاح';
+
+        hideError();
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('errorArea');
+        el.textContent = msg;
+        el.classList.add('show');
+    }
+
+    function hideError() {
+        document.getElementById('errorArea').classList.remove('show');
+    }
+
+    function setProgress(percent, text) {
+        document.getElementById('progressFill').style.width = percent + '%';
+        document.getElementById('progressText').textContent = text;
+    }
+
+    function showProgress() {
+        document.getElementById('progressArea').classList.add('show');
+        document.getElementById('resultArea').classList.remove('show');
+    }
+
+    function hideProgress() {
+        document.getElementById('progressArea').classList.remove('show');
+    }
+
+    function showResult() {
+        document.getElementById('resultArea').classList.add('show');
+    }
+
     async function processData() {
         const file1 = document.getElementById('mainFile').files[0];
         const file2 = document.getElementById('searchFile').files[0];
         const col1 = document.getElementById('mainColName').value.trim();
         const col2 = document.getElementById('searchColName').value.trim();
 
-        if (!file1 || !file2 || !col1 || !col2) return alert("يرجى ملء جميع الحقول!");
+        hideError();
 
-        const read = (f) => new Promise(res => {
-            const reader = new FileReader();
-            reader.onload = (e) => res(XLSX.read(e.target.result, {type: 'binary'}));
-            reader.readAsBinaryString(f);
-        });
+        if (!file1 || !file2 || !col1 || !col2) {
+            showError('⚠️ يرجى رفع الملفين وتحديد أسماء الأعمدة بدقة!');
+            return;
+        }
 
-        const wb1 = await read(file1);
-        const wb2 = await read(file2);
-        const data1 = XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]]);
-        const data2 = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]]);
+        const btn = document.getElementById('processBtn');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnText = document.getElementById('btnText');
 
-        const result = data2.map(row => {
-            const matches = data1.filter(m => String(m[col1]).trim() === String(row[col2]).trim());
-            
-            if (matches.length > 0) {
-                // نأخذ نسخة من أول تطابق (ليحتوي على الديسكريبشن وباقي البيانات)
-                let mergedRow = { ...row, ...matches[0] };
-                
-                // نجمع اللوكيشنات والكميات إذا كانت موجودة
-                if (matches.length > 1) {
-                    mergedRow['Location'] = matches.map(m => m['Location']).join(' | ');
-                    mergedRow['Quantity'] = matches.map(m => m['Quantity']).join(' | ');
-                }
-                return mergedRow;
-            } else {
-                // إذا لم يوجد تطابق نضع N/A
-                return { ...row, 'Description': 'N/A', 'Location': 'N/A', 'Quantity': 'N/A' };
+        btn.disabled = true;
+        btnIcon.innerHTML = '<span class="spinner"></span>';
+        btnText.textContent = 'جاري المعالجة...';
+
+        showProgress();
+        setProgress(10, 'جاري قراءة الملف الأول...');
+
+        try {
+            const read = (f) => new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        res(XLSX.read(e.target.result, {type: 'binary'}));
+                    } catch(err) {
+                        rej('خطأ في قراءة الملف: ' + f.name);
+                    }
+                };
+                reader.onerror = () => rej('خطأ في قراءة الملف: ' + f.name);
+                reader.readAsBinaryString(f);
+            });
+
+            const wb1 = await read(file1);
+            setProgress(30, 'جاري قراءة الملف الثاني...');
+            const wb2 = await read(file2);
+
+            setProgress(50, 'جاري تحليل البيانات...');
+            const data1 = XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]]);
+            const data2 = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]]);
+
+            if (data1.length === 0) throw new Error('الملف الأساسي فارغ أو لا يحتوي على بيانات');
+            if (data2.length === 0) throw new Error('ملف البحث فارغ أو لا يحتوي على بيانات');
+
+            // Check columns exist
+            const mainKeys = Object.keys(data1[0]);
+            const searchKeys = Object.keys(data2[0]);
+
+            if (!mainKeys.includes(col1)) {
+                throw new Error('عمود "' + col1 + '" غير موجود في الملف الأساسي. الأعمدة المتاحة: ' + mainKeys.join(', '));
             }
-        });
+            if (!searchKeys.includes(col2)) {
+                throw new Error('عمود "' + col2 + '" غير موجود في ملف البحث. الأعمدة المتاحة: ' + searchKeys.join(', '));
+            }
 
-        const ws = XLSX.utils.json_to_sheet(result);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Result");
-        XLSX.writeFile(wb, "Final_Result.xlsx");
-        alert("تمت العملية بنجاح!");
+            setProgress(60, 'جاري البحث عن التطابقات...');
+
+            const result = data2.map((row, idx) => {
+                const match = data1.find(m => String(m[col1]).trim() === String(row[col2]).trim());
+
+                if (match) {
+                    return { ...row, ...match };
+                } else {
+                    let emptyRow = { ...row };
+                    Object.keys(data1[0]).forEach(key => {
+                        if (!(key in emptyRow)) emptyRow[key] = 'N/A';
+                    });
+                    return emptyRow;
+                }
+            });
+
+            setProgress(85, 'جاري إنشاء ملف النتيجة...');
+
+            const ws = XLSX.utils.json_to_sheet(result);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Result');
+
+            setProgress(100, 'جاري التحميل...');
+
+            XLSX.writeFile(wb, 'Final_Result.xlsx');
+
+            hideProgress();
+            showResult();
+
+        } catch (err) {
+            hideProgress();
+            showError('❌ ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btnIcon.textContent = '🚀';
+            btnText.textContent = 'دمج وتحميل الملف';
+        }
     }
 </script>
 </body>
