@@ -2,75 +2,882 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>أداة دمج ملفات الإكسيل الذكية</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة معالجة ملفات Excel</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            color: #e94560;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            color: #e94560;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 1.4em;
+        }
+
+        .file-input-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #c0c0c0;
+        }
+
+        .file-input-box {
+            position: relative;
+            border: 2px dashed rgba(233, 69, 96, 0.4);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(233, 69, 96, 0.05);
+        }
+
+        .file-input-box:hover {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .file-input-box.has-file {
+            border-color: #4ecca3;
+            background: rgba(78, 204, 163, 0.1);
+        }
+
+        .file-input-box input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-box .upload-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+
+        .file-input-box.has-file .upload-icon {
+            color: #4ecca3;
+        }
+
+        .file-input-box .file-name {
+            font-weight: 600;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .file-input-box .file-hint {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #c0c0c0;
+            font-size: 0.95em;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
+        }
+
+        .input-group input[type="text"]::placeholder {
+            color: #666;
+        }
+
+        .hint {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .columns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(233, 69, 96, 0.6);
+        }
+
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4ecca3, #3db892);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(78, 204, 163, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(78, 204, 163, 0.6);
+        }
+
+        .btn-success:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #4ecca3);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #a0a0a0;
+            font-size: 0.95em;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(78, 204, 163, 0.1);
+            border: 1px solid rgba(78, 204, 163, 0.3);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .result-container.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .error-message {
+            display: none;
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid rgba(233, 69, 96, 0.4);
+            color: #ff6b7a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-table th {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            font-weight: 600;
+        }
+
+        .preview-table td {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-table tr:hover td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .na-value {
+            color: #ff6b7a;
+            font-style: italic;
+        }
+
+        .section-divider {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.4), transparent);
+            margin: 25px 0;
+        }
+
+        .file-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .file-section {
+                grid-template-columns: 1fr;
+            }
+            .columns-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.6em;
+            }
+            .buttons-row {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 أداة معالجة ملفات Excel</h1>
+            <p>أداة متقدمة لربط البيانات بين ملفين Excel مع تحديد أسماء الأعمدة ديناميكياً</p>
+        </div>
 
-<div class="container">
-    <h2>دمج بيانات الإكسيل</h2>
-    
-    <div class="input-group">
-        <label>1. ملف قاعدة البيانات (الأساسي):</label>
-        <input type="file" id="mainFile" accept=".xlsx">
+        <!-- قسم رفع الملفات -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">📁</span>
+                رفع الملفات
+            </div>
+            <div class="file-section">
+                <div class="file-input-wrapper">
+                    <label>الملف الأساسي (قاعدة البيانات)</label>
+                    <div class="file-input-box" id="baseFileBox">
+                        <input type="file" id="baseFile" accept=".xlsx,.xls,.csv" />
+                        <div class="upload-icon">📂</div>
+                        <div class="file-name" id="baseFileName">اضغط لاختيار الملف</div>
+                        <div class="file-hint">Excel (.xlsx, .xls) أو CSV</div>
+                    </div>
+                </div>
+                <div class="file-input-wrapper">
+                    <label>ملف البحث</label>
+                    <div class="file-input-box" id="searchFileBox">
+                        <input type="file" id="searchFile" accept=".xlsx,.xls,.csv" />
+                        <div class="upload-icon">🔍</div>
+                        <div class="file-name" id="searchFileName">اضغط لاختيار الملف</div>
+                        <div class="file-hint">Excel (.xlsx, .xls) أو CSV</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم إعدادات الأعمدة -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">⚙️</span>
+                إعدادات أسماء الأعمدة
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <strong style="color: #e94560;">📌 الملف الأساسي (قاعدة البيانات):</strong>
+            </div>
+
+            <div class="columns-grid">
+                <div class="input-group">
+                    <label for="baseItemCol">اسم عمود Item Number</label>
+                    <input type="text" id="baseItemCol" placeholder="مثال: Item Number, رقم الصنف, SKU" />
+                    <div class="hint">أدخل اسم العمود الذي يحتوي على رقم الصنف في الملف الأساسي</div>
+                </div>
+                <div class="input-group">
+                    <label for="descCol">اسم عمود Description</label>
+                    <input type="text" id="descCol" placeholder="مثال: Description, الوصف, Name" />
+                    <div class="hint">أدخل اسم عمود الوصف في الملف الأساسي</div>
+                </div>
+                <div class="input-group">
+                    <label for="locCol">اسم عمود Location</label>
+                    <input type="text" id="locCol" placeholder="مثال: Location, الموقع, Warehouse" />
+                    <div class="hint">أدخل اسم عمود الموقع في الملف الأساسي</div>
+                </div>
+                <div class="input-group">
+                    <label for="qtyCol">اسم عمود Quantity</label>
+                    <input type="text" id="qtyCol" placeholder="مثال: Quantity, الكمية, Qty" />
+                    <div class="hint">أدخل اسم عمود الكمية في الملف الأساسي</div>
+                </div>
+            </div>
+
+            <hr class="section-divider" />
+
+            <div style="margin-bottom: 20px;">
+                <strong style="color: #e94560;">🔍 ملف البحث:</strong>
+            </div>
+
+            <div class="input-group">
+                <label for="searchItemCol">اسم عمود Item Number في ملف البحث</label>
+                <input type="text" id="searchItemCol" placeholder="مثال: Item Number, رقم الصنف, SKU" />
+                <div class="hint">أدخل اسم العمود الذي يحتوي على أرقام الأصناف المراد البحث عنها</div>
+            </div>
+        </div>
+
+        <!-- أزرار التحكم -->
+        <div class="card" style="text-align: center;">
+            <div class="buttons-row">
+                <button class="btn btn-primary" id="processBtn" onclick="startProcessing()">
+                    <span id="processBtnText">🚀 بدء المعالجة</span>
+                </button>
+                <button class="btn btn-success" id="downloadBtn" onclick="downloadResult()" disabled>
+                    <span>💾 تحميل النتيجة</span>
+                </button>
+            </div>
+
+            <!-- شريط التقدم -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">جاري المعالجة...</div>
+            </div>
+
+            <!-- رسالة الخطأ -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- نتائج المعالجة -->
+            <div class="result-container" id="resultContainer">
+                <div class="result-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">إجمالي العناصر</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statMatched">0</div>
+                        <div class="stat-label">تم العثور عليها</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statNotFound">0</div>
+                        <div class="stat-label">غير موجودة</div>
+                    </div>
+                </div>
+
+                <h3 style="color: #4ecca3; margin-bottom: 15px;">معاينة النتائج (أول 10 صفوف)</h3>
+                <div style="overflow-x: auto;">
+                    <table class="preview-table" id="previewTable">
+                        <thead>
+                            <tr>
+                                <th>Item Number</th>
+                                <th>Description</th>
+                                <th>Location</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- دليل الاستخدام -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">📖</span>
+                دليل الاستخدام
+            </div>
+            <div style="line-height: 2; color: #b0b0b0;">
+                <p><strong style="color: #e94560;">1.</strong> <strong>رفع الملفات:</strong> اختر الملف الأساسي (قاعدة البيانات الكاملة) وملف البحث (الأصناف المراد البحث عنها).</p>
+                <p><strong style="color: #e94560;">2.</strong> <strong>تحديد أسماء الأعمدة:</strong> أدخل أسماء الأعمدة <u>بالضبط</u> كما تظهر في ملفات Excel (حساس لحالة الأحرف). يمكنك ترك الحقول فارغة لاستخدام القيم الافتراضية.</p>
+                <p><strong style="color: #e94560;">3.</strong> <strong>بدء المعالجة:</strong> اضغط على زر "بدء المعالجة" ليبدأ البرنامج بالبحث عن كل Item Number من ملف البحث داخل الملف الأساسي.</p>
+                <p><strong style="color: #e94560;">4.</strong> <strong>النتائج:</strong> إذا وجد تطابق، يتم جلب Description و Location و Quantity. إذا لم يوجد، يظهر Item Number مع N/A في باقي الأعمدة.</p>
+                <p><strong style="color: #e94560;">5.</strong> <strong>التحميل:</strong> اضغط على "تحميل النتيجة" لحفظ ملف Excel الجديد.</p>
+                <hr class="section-divider" />
+                <p style="color: #888; font-size: 0.9em;"><strong style="color: #e94560;">ملاحظة:</strong> يتم معالجة جميع البيانات <strong>محلياً</strong> في متصفحك ولا يتم رفع أي ملفات إلى الإنترنت.</p>
+            </div>
+        </div>
     </div>
-    
-    <div class="input-group">
-        <label>2. ملف البحث (الذي تريد تكميل بياناته):</label>
-        <input type="file" id="searchFile" accept=".xlsx">
-    </div>
 
-    <button onclick="processData()">معالجة ودمج البيانات</button>
-</div>
+    <script>
+        // المتغيرات العامة
+        let baseWorkbook = null;
+        let searchWorkbook = null;
+        let resultData = [];
+        let resultWorkbook = null;
 
-<script>
-    async function processData() {
-        const mainFile = document.getElementById('mainFile').files[0];
-        const searchFile = document.getElementById('searchFile').files[0];
-        if (!mainFile || !searchFile) return alert("يرجى اختيار الملفين أولاً!");
+        // القيم الافتراضية لأسماء الأعمدة
+        const DEFAULTS = {
+            baseItemCol: 'Item Number',
+            descCol: 'Description',
+            locCol: 'Location',
+            qtyCol: 'Quantity',
+            searchItemCol: 'Item Number'
+        };
 
-        const readExcel = (file) => new Promise(resolve => {
+        // تعيين القيم الافتراضية عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('baseItemCol').value = DEFAULTS.baseItemCol;
+            document.getElementById('descCol').value = DEFAULTS.descCol;
+            document.getElementById('locCol').value = DEFAULTS.locCol;
+            document.getElementById('qtyCol').value = DEFAULTS.qtyCol;
+            document.getElementById('searchItemCol').value = DEFAULTS.searchItemCol;
+        });
+
+        // معالجة رفع الملفات
+        document.getElementById('baseFile').addEventListener('change', function(e) {
+            handleFileUpload(e.target.files[0], 'base');
+        });
+
+        document.getElementById('searchFile').addEventListener('change', function(e) {
+            handleFileUpload(e.target.files[0], 'search');
+        });
+
+        function handleFileUpload(file, type) {
+            if (!file) return;
+
+            const nameEl = type === 'base' ? document.getElementById('baseFileName') : document.getElementById('searchFileName');
+            const boxEl = type === 'base' ? document.getElementById('baseFileBox') : document.getElementById('searchFileBox');
+
+            nameEl.textContent = file.name;
+            boxEl.classList.add('has-file');
+
             const reader = new FileReader();
-            reader.onload = (e) => resolve(XLSX.read(e.target.result, {type: 'binary'}));
-            reader.readAsBinaryString(file);
-        });
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
 
-        const wbMain = await readExcel(mainFile);
-        const wbSearch = await readExcel(searchFile);
+                if (type === 'base') {
+                    baseWorkbook = workbook;
+                } else {
+                    searchWorkbook = workbook;
+                }
 
-        const dataMain = XLSX.utils.sheet_to_json(wbMain.Sheets[wbMain.SheetNames[0]]);
-        const dataSearch = XLSX.utils.sheet_to_json(wbSearch.Sheets[wbSearch.SheetNames[0]]);
+                hideError();
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
-        // نفترض أن العمود الأول هو "Item Number" في كلا الملفين
-        const mainKeys = Object.keys(dataMain[0]);
-        const idColMain = mainKeys[0]; 
-        const idColSearch = Object.keys(dataSearch[0])[0];
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.classList.add('show');
+        }
 
-        const result = dataSearch.map(row => {
-            const match = dataMain.find(m => m[idColMain] == row[idColSearch]);
-            if (match) {
-                return { ...row, ...match }; // دمج بيانات الملف الأساسي
-            } else {
-                let emptyRow = { ...row };
-                mainKeys.forEach(k => { if (!emptyRow[k]) emptyRow[k] = 'N/A'; });
-                return emptyRow;
+        function hideError() {
+            const el = document.getElementById('errorMessage');
+            el.classList.remove('show');
+        }
+
+        function setProgress(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text || 'جاري المعالجة...';
+        }
+
+        function showProgress() {
+            document.getElementById('progressContainer').style.display = 'block';
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function getSheetData(workbook) {
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            return XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        }
+
+        function findColumnIndex(headers, colName) {
+            const idx = headers.findIndex(h => String(h).trim() === colName.trim());
+            if (idx === -1) {
+                // محاولة البحث بدون حساسية حالة الأحرف
+                const idx2 = headers.findIndex(h => String(h).trim().toLowerCase() === colName.trim().toLowerCase());
+                return idx2;
             }
-        });
+            return idx;
+        }
 
-        const ws = XLSX.utils.json_to_sheet(result);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "MergedData");
-        XLSX.writeFile(wb, "Merged_Output.xlsx");
-    }
-</script>
+        async function startProcessing() {
+            hideError();
+
+            // التحقق من رفع الملفات
+            if (!baseWorkbook) {
+                showError('❌ يرجى رفع الملف الأساسي (قاعدة البيانات) أولاً');
+                return;
+            }
+            if (!searchWorkbook) {
+                showError('❌ يرجى رفع ملف البحث أولاً');
+                return;
+            }
+
+            // قراءة أسماء الأعمدة من المدخلات
+            const baseItemCol = document.getElementById('baseItemCol').value.trim() || DEFAULTS.baseItemCol;
+            const descCol = document.getElementById('descCol').value.trim() || DEFAULTS.descCol;
+            const locCol = document.getElementById('locCol').value.trim() || DEFAULTS.locCol;
+            const qtyCol = document.getElementById('qtyCol').value.trim() || DEFAULTS.qtyCol;
+            const searchItemCol = document.getElementById('searchItemCol').value.trim() || DEFAULTS.searchItemCol;
+
+            // تعطيل الأزرار
+            const processBtn = document.getElementById('processBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            processBtn.disabled = true;
+            downloadBtn.disabled = true;
+            document.getElementById('processBtnText').innerHTML = '<span class="spinner"></span> جاري المعالجة...';
+
+            showProgress();
+            setProgress(10, 'جاري قراءة الملفات...');
+
+            // إعطاء الوقت لتحديث الواجهة
+            await new Promise(r => setTimeout(r, 100));
+
+            try {
+                // قراءة بيانات الملفات
+                const baseData = getSheetData(baseWorkbook);
+                const searchData = getSheetData(searchWorkbook);
+
+                if (baseData.length < 2) {
+                    throw new Error('الملف الأساسي فارغ أو لا يحتوي على بيانات كافية');
+                }
+                if (searchData.length < 2) {
+                    throw new Error('ملف البحث فارغ أو لا يحتوي على بيانات كافية');
+                }
+
+                setProgress(25, 'جاري تحليل أسماء الأعمدة...');
+                await new Promise(r => setTimeout(r, 50));
+
+                // استخراج رؤوس الأعمدة
+                const baseHeaders = baseData[0].map(h => String(h || '').trim());
+                const searchHeaders = searchData[0].map(h => String(h || '').trim());
+
+                // البحث عن مؤشرات الأعمدة
+                const baseItemIdx = findColumnIndex(baseHeaders, baseItemCol);
+                const descIdx = findColumnIndex(baseHeaders, descCol);
+                const locIdx = findColumnIndex(baseHeaders, locCol);
+                const qtyIdx = findColumnIndex(baseHeaders, qtyCol);
+                const searchItemIdx = findColumnIndex(searchHeaders, searchItemCol);
+
+                // التحقق من وجود الأعمدة
+                const missingCols = [];
+                if (baseItemIdx === -1) missingCols.push('عمود Item Number في الملف الأساسي (' + baseItemCol + ')');
+                if (descIdx === -1) missingCols.push('عمود Description في الملف الأساسي (' + descCol + ')');
+                if (locIdx === -1) missingCols.push('عمود Location في الملف الأساسي (' + locCol + ')');
+                if (qtyIdx === -1) missingCols.push('عمود Quantity في الملف الأساسي (' + qtyCol + ')');
+                if (searchItemIdx === -1) missingCols.push('عمود Item Number في ملف البحث (' + searchItemCol + ')');
+
+                if (missingCols.length > 0) {
+                    throw new Error('❌ الأعمدة التالية غير موجودة:
+' + missingCols.join('
+') + '
+
+تأكد من كتابة الأسماء بالضبط كما في الملف.');
+                }
+
+                setProgress(40, 'جاري بناء فهرس البيانات...');
+                await new Promise(r => setTimeout(r, 50));
+
+                // بناء فهرس للملف الأساسي (Item Number -> row data)
+                const baseIndex = new Map();
+                for (let i = 1; i < baseData.length; i++) {
+                    const row = baseData[i];
+                    const itemNum = String(row[baseItemIdx] || '').trim();
+                    if (itemNum) {
+                        baseIndex.set(itemNum, {
+                            desc: row[descIdx],
+                            loc: row[locIdx],
+                            qty: row[qtyIdx]
+                        });
+                    }
+                }
+
+                setProgress(60, 'جاري البحث والمطابقة...');
+                await new Promise(r => setTimeout(r, 50));
+
+                // معالجة ملف البحث
+                resultData = [];
+                let matched = 0;
+                let notFound = 0;
+
+                for (let i = 1; i < searchData.length; i++) {
+                    const row = searchData[i];
+                    const itemNum = String(row[searchItemIdx] || '').trim();
+
+                    if (!itemNum) continue;
+
+                    const baseRow = baseIndex.get(itemNum);
+
+                    if (baseRow) {
+                        resultData.push({
+                            'Item Number': itemNum,
+                            'Description': baseRow.desc || '',
+                            'Location': baseRow.loc || '',
+                            'Quantity': baseRow.qty || ''
+                        });
+                        matched++;
+                    } else {
+                        resultData.push({
+                            'Item Number': itemNum,
+                            'Description': 'N/A',
+                            'Location': 'N/A',
+                            'Quantity': 'N/A'
+                        });
+                        notFound++;
+                    }
+
+                    // تحديث التقدم
+                    const progress = 60 + Math.floor((i / searchData.length) * 30);
+                    setProgress(progress, 'جاري المعالجة: ' + i + ' / ' + (searchData.length - 1));
+
+                    if (i % 100 === 0) {
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+
+                setProgress(95, 'جاري إنشاء ملف النتيجة...');
+                await new Promise(r => setTimeout(r, 50));
+
+                // إنشاء ملف Excel للنتيجة
+                const ws = XLSX.utils.json_to_sheet(resultData);
+                resultWorkbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(resultWorkbook, ws, 'Results');
+
+                // تنسيق عرض الأعمدة
+                ws['!cols'] = [
+                    { wch: 20 },
+                    { wch: 40 },
+                    { wch: 20 },
+                    { wch: 15 }
+                ];
+
+                setProgress(100, 'اكتملت المعالجة!');
+                await new Promise(r => setTimeout(r, 300));
+
+                // عرض النتائج
+                document.getElementById('statTotal').textContent = resultData.length;
+                document.getElementById('statMatched').textContent = matched;
+                document.getElementById('statNotFound').textContent = notFound;
+
+                // عرض معاينة
+                const tbody = document.getElementById('previewTableBody');
+                tbody.innerHTML = '';
+                const previewCount = Math.min(resultData.length, 10);
+                for (let i = 0; i < previewCount; i++) {
+                    const row = resultData[i];
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = 
+                        '<td>' + escapeHtml(String(row['Item Number'])) + '</td>' +
+                        '<td>' + (row['Description'] === 'N/A' ? '<span class="na-value">N/A</span>' : escapeHtml(String(row['Description']))) + '</td>' +
+                        '<td>' + (row['Location'] === 'N/A' ? '<span class="na-value">N/A</span>' : escapeHtml(String(row['Location']))) + '</td>' +
+                        '<td>' + (row['Quantity'] === 'N/A' ? '<span class="na-value">N/A</span>' : escapeHtml(String(row['Quantity']))) + '</td>';
+                    tbody.appendChild(tr);
+                }
+
+                document.getElementById('resultContainer').classList.add('show');
+                downloadBtn.disabled = false;
+
+                hideProgress();
+
+            } catch (err) {
+                hideProgress();
+                showError(err.message);
+            } finally {
+                processBtn.disabled = false;
+                document.getElementById('processBtnText').innerHTML = '🚀 بدء المعالجة';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function downloadResult() {
+            if (!resultWorkbook) {
+                showError('لا يوجد ملف للتحميل. يرجى تشغيل المعالجة أولاً.');
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + 
+                          String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(now.getDate()).padStart(2, '0') + '_' +
+                          String(now.getHours()).padStart(2, '0') + 
+                          String(now.getMinutes()).padStart(2, '0');
+
+            XLSX.writeFile(resultWorkbook, 'Result_' + dateStr + '.xlsx');
+        }
+    </script>
 </body>
 </html>
