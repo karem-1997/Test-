@@ -2,57 +2,41 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>أداة معالجة ملفات الإكسيل</title>
+    <title>أداة دمج ملفات الإكسيل الذكية</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #218838; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>أداة ربط ملفات الإكسيل</h2>
+    <h2>دمج بيانات الإكسيل</h2>
     
     <div class="input-group">
-        <label>الملف الأساسي (قاعدة البيانات):</label>
-        <input type="file" id="mainFile" accept=".xlsx, .xls">
+        <label>1. ملف قاعدة البيانات (الأساسي):</label>
+        <input type="file" id="mainFile" accept=".xlsx">
     </div>
     
     <div class="input-group">
-        <label>الملف الثاني (البحث):</label>
-        <input type="file" id="searchFile" accept=".xlsx, .xls">
+        <label>2. ملف البحث (الذي تريد تكميل بياناته):</label>
+        <input type="file" id="searchFile" accept=".xlsx">
     </div>
 
-    <hr>
-    
-    <div class="input-group">
-        <label>اسم عمود Item Number في الملف الأساسي:</label>
-        <input type="text" id="mainItemCol" placeholder="مثلاً: Item Number">
-    </div>
-    <div class="input-group">
-        <label>أسماء أعمدة البيانات المطلوب جلبها (بفاصلة):</label>
-        <input type="text" id="dataCols" placeholder="مثلاً: Description,Location,Quantity">
-    </div>
-    <div class="input-group">
-        <label>اسم عمود Item Number في الملف الثاني:</label>
-        <input type="text" id="searchItemCol" placeholder="مثلاً: Item Number">
-    </div>
-
-    <button onclick="processData()">بدء المعالجة والتحميل</button>
+    <button onclick="processData()">معالجة ودمج البيانات</button>
 </div>
 
 <script>
     async function processData() {
         const mainFile = document.getElementById('mainFile').files[0];
         const searchFile = document.getElementById('searchFile').files[0];
-
-        if (!mainFile || !searchFile) return alert("يرجى رفع الملفين!");
+        if (!mainFile || !searchFile) return alert("يرجى اختيار الملفين أولاً!");
 
         const readExcel = (file) => new Promise(resolve => {
             const reader = new FileReader();
@@ -66,23 +50,26 @@
         const dataMain = XLSX.utils.sheet_to_json(wbMain.Sheets[wbMain.SheetNames[0]]);
         const dataSearch = XLSX.utils.sheet_to_json(wbSearch.Sheets[wbSearch.SheetNames[0]]);
 
-        const mainKey = document.getElementById('mainItemCol').value;
-        const searchKey = document.getElementById('searchItemCol').value;
-        const dataCols = document.getElementById('dataCols').value.split(',').map(s => s.trim());
+        // نفترض أن العمود الأول هو "Item Number" في كلا الملفين
+        const mainKeys = Object.keys(dataMain[0]);
+        const idColMain = mainKeys[0]; 
+        const idColSearch = Object.keys(dataSearch[0])[0];
 
         const result = dataSearch.map(row => {
-            const found = dataMain.find(m => m[mainKey] == row[searchKey]);
-            let newRow = { [searchKey]: row[searchKey] };
-            dataCols.forEach(col => {
-                newRow[col] = found ? (found[col] || 'N/A') : 'N/A';
-            });
-            return newRow;
+            const match = dataMain.find(m => m[idColMain] == row[idColSearch]);
+            if (match) {
+                return { ...row, ...match }; // دمج بيانات الملف الأساسي
+            } else {
+                let emptyRow = { ...row };
+                mainKeys.forEach(k => { if (!emptyRow[k]) emptyRow[k] = 'N/A'; });
+                return emptyRow;
+            }
         });
 
         const ws = XLSX.utils.json_to_sheet(result);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Result");
-        XLSX.writeFile(wb, "Result_File.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "MergedData");
+        XLSX.writeFile(wb, "Merged_Output.xlsx");
     }
 </script>
 </body>
